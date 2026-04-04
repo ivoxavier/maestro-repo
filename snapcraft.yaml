@@ -1,0 +1,60 @@
+title: Maestro
+name: maestro
+base: core24
+version: '0.0.1'
+summary: Service Orchestrator for SystemD User Services
+license: Proprietary
+issues: https://github.com/ivoxavier/maestro-repo/issues
+website: https://github.com/ivoxavier/maestro-repo
+contact: ivofernandes12@gmail.com
+donation: https://www.paypal.com/donate/?hosted_button_id=EZUYCD4ANT4RA
+description: |
+  Maestro is a native GNOME tool to manage systemd user services.
+grade: stable
+confinement: classic
+
+apps:
+  maestro:
+    command: bin/maestro-launch
+    common-id: maestro.desktop
+
+parts:
+  maestro-app:
+    plugin: nil
+    source: .
+    build-packages:
+      - valac
+      - libgtk-3-dev
+      - libjson-glib-dev
+      - gettext
+      - gcc
+      - pkg-config
+    stage-packages:
+      - libgtk-3-0
+      - libjson-glib-1.0-0
+      - policykit-1
+      - adwaita-icon-theme
+    override-build: |
+      mkdir -p $SNAPCRAFT_PART_INSTALL/bin
+      mkdir -p $SNAPCRAFT_PART_INSTALL/meta/gui
+      mkdir -p $SNAPCRAFT_PART_INSTALL/share/maestro/assets
+      
+      
+      valac --pkg gtk+-3.0 --pkg json-glib-1.0 \
+            -X -DGETTEXT_PACKAGE=\"maestro\" \
+            src/main.vala src/about.vala \
+            -o $SNAPCRAFT_PART_INSTALL/bin/maestro
+      
+      
+      cp data/maestro.desktop $SNAPCRAFT_PART_INSTALL/meta/gui/maestro.desktop
+      cp data/AppIcon.svg $SNAPCRAFT_PART_INSTALL/meta/gui/icon.svg
+      cp data/AppIcon.svg $SNAPCRAFT_PART_INSTALL/meta/gui/maestro.svg
+      
+      cp data/manifest.json $SNAPCRAFT_PART_INSTALL/share/maestro/assets/manifest.json
+      cp data/AppIcon.svg $SNAPCRAFT_PART_INSTALL/share/maestro/assets/AppIcon.svg
+      sed -i 's/Icon=maestro/Icon=${SNAP}\/meta\/gui\/icon.svg/g' $SNAPCRAFT_PART_INSTALL/meta/gui/maestro.desktop
+      
+      echo '#!/bin/bash' > $SNAPCRAFT_PART_INSTALL/bin/maestro-launch
+      echo 'export XDG_DATA_DIRS=$SNAP/usr/share:$XDG_DATA_DIRS' >> $SNAPCRAFT_PART_INSTALL/bin/maestro-launch
+      echo 'exec $SNAP/bin/maestro "$@"' >> $SNAPCRAFT_PART_INSTALL/bin/maestro-launch
+      chmod +x $SNAPCRAFT_PART_INSTALL/bin/maestro-launch
